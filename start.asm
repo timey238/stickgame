@@ -1,84 +1,110 @@
 INCLUDE Irvine32.inc
 
+main EQU start@0
+
 .data
-outputHandle DWORD 0           ; 控制台句柄
-bytesWritten DWORD 0           ; 實際寫入字元數
-count DWORD 0                  ; 寫入字元數量
-xyPosition COORD <2, 21>       ; 開始輸出的位置 (左下角)
-
-; 定義 ASCII 圖形的每一行和長度
-asciiLine1 BYTE " \    /\", 0
-line1Len DWORD SIZEOF asciiLine1 - 1
-
-asciiLine2 BYTE "  )  ( ')", 0
-line2Len DWORD SIZEOF asciiLine2 - 1
-
-asciiLine3 BYTE " (  /  )", 0
-line3Len DWORD SIZEOF asciiLine3 - 1
-
-asciiLine4 BYTE "  \(__)|", 0
-line4Len DWORD SIZEOF asciiLine4 - 1
-
-; 定義平台的字符和長度 (平台寬度擴展到 14)
-platformLine BYTE "==============", 0
-platformLen DWORD SIZEOF platformLine - 1
-
+; 定義 cat ASCII 圖形的每一行
+cat1 BYTE " \    /\", 0
+cat2 BYTE "  )  ( ')", 0
+cat3 BYTE " (  /  )", 0
+cat4 BYTE "  \(__)|", 0
+cat_xy COORD <2, 21>
+; 定義初始平台的字符 (平台寬度為 14)
+platform0 BYTE "==============", 0
+; 定義生成目標平台的字符和其中心座標
+platformb BYTE "=", 0
+platformb_xy COORD <75, 25>
+; 定義隨機的平台寬度
+randomnum WORD ?
 ; 定義垂直線 * 的字串和長度
-verticalLine BYTE "*", 0
-verticalLineLen DWORD SIZEOF verticalLine - 1
-
+verticalLine BYTE "***", 0
 ; 起始座標和生成限制
-xyVertical COORD <12, 24>      ; 設定垂直線的生成座標
+xyVertical COORD <15, 25>      ; 設定垂直線的生成座標
 verticalCount DWORD 0          ; 當前生成數量
 verticalMax DWORD 20           ; 最大生成數量
 
-main EQU start@0
+outputHandle DWORD ?
+cellsWritten DWORD ?
 
 .code
 SetConsoleOutputCP PROTO STDCALL :DWORD
 
 main PROC
-    ; 設置控制台輸出編碼
+    ; Set the console code page to 437 (supports box drawing characters)
     INVOKE SetConsoleOutputCP, 437
 
-    ; 取得控制台輸出句柄
+    ; Get the console output handle
     INVOKE GetStdHandle, STD_OUTPUT_HANDLE
-    mov outputHandle, eax ; 保存控制台句柄
+    mov outputHandle, eax
     call Clrscr           ; 清屏
 
-    ; 打印 ASCII 圖形
-    mov xyPosition.X, 2   ; 設定圖形的 X 起始位置 (左邊距)
-    mov xyPosition.Y, 21  ; 設定圖形的 Y 起始位置 (接近底部)
+    ; Write the ASCII art to the console
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR cat1,         ; Pointer to ASCII art
+           LENGTHOF cat1,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    inc (COORD PTR cat_xy).Y	; next line
 
-    ; 打印第一行
-    lea ecx, asciiLine1
-    mov eax, line1Len
-    call PrintAscii
-    inc xyPosition.Y
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR cat2,         ; Pointer to ASCII art
+           LENGTHOF cat2,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    inc (COORD PTR cat_xy).Y	; next line
 
-    ; 打印第二行
-    lea ecx, asciiLine2
-    mov eax, line2Len
-    call PrintAscii
-    inc xyPosition.Y
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR cat3,         ; Pointer to ASCII art
+           LENGTHOF cat3,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    inc (COORD PTR cat_xy).Y	; next line
 
-    ; 打印第三行
-    lea ecx, asciiLine3
-    mov eax, line3Len
-    call PrintAscii
-    inc xyPosition.Y
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR cat4,         ; Pointer to ASCII art
+           LENGTHOF cat4,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    inc (COORD PTR cat_xy).Y	; next line
 
-    ; 打印第四行
-    lea ecx, asciiLine4
-    mov eax, line4Len
-    call PrintAscii
-    inc xyPosition.Y
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR platform0,         ; Pointer to platform0
+           LENGTHOF platform0,       ; Length of platform0
+           cat_xy,       ; Starting position (bottom of cat)
+           ADDR cellsWritten ; Number of characters written
 
-    ; 打印平台 (左右各延伸 2 單位)
-    mov xyPosition.X, 0   ; 平台從最左邊開始
-    lea ecx, platformLine
-    mov eax, platformLen  ; 平台的總寬度為 14
-    call PrintAscii
+    call Randomize ; 設亂數種子
+    mov eax, 19
+    call RandomRange
+    inc eax ; range 1~20 store in eax
+    mov randomnum, ax
+
+    mov ax, (COORD PTR platformb_xy).X ; 設生成起始位置
+    sub ax, randomnum
+    mov (COORD PTR platformb_xy).X, ax
+    mov cx, randomnum ; 設為平台總長 (2*randomnum)
+    add cx, randomnum
+
+Generate_plat: ; 生成平台
+    push ecx
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     
+           ADDR platformb,        
+           LENGTHOF platformb,      
+           platformb_xy,      
+           ADDR cellsWritten 
+    inc (COORD PTR platformb_xy).X ; 每生成一格 X+1
+    pop ecx
+    loop Generate_plat
+
+    mov ax, (COORD PTR platformb_xy).X ; 回復platformb_xy.X成原來的值
+    sub ax, randomnum
+    mov (COORD PTR platformb_xy).X, ax
 
     ; 初始化生成數量
     mov verticalCount, 0
@@ -103,13 +129,12 @@ GenerateVerticalLine:
 
     ; 打印 * 到當前位置
     lea ecx, verticalLine
-    mov eax, verticalLineLen
     INVOKE WriteConsoleOutputCharacter,
            outputHandle,    ; 控制台句柄
-           ecx,             ; 字符串 * 的地址
-           eax,             ; 字符串的長度
+           ADDR verticalLine,  ; 字符串 * 的地址
+           LENGTHOF verticalLine,             ; 字符串的長度
            xyVertical,      ; 打印位置
-           OFFSET count     ; 實際寫入的字元數
+           ADDR cellsWritten   ; 實際寫入的字元數
 
     ; 更新座標和生成計數
     dec xyVertical.Y        ; 向上移動一行
@@ -118,18 +143,7 @@ GenerateVerticalLine:
     ; 返回按鍵監聽
     jmp KeyLoop
 
+    exit
 main ENDP
-
-; 打印 ASCII 圖形的子程序
-PrintAscii PROC
-    ; 實際打印圖形
-    INVOKE WriteConsoleOutputCharacter,
-        outputHandle,        ; 控制台句柄
-        ecx,                 ; ASCII 圖形的指針
-        eax,                 ; 每行字符數量
-        xyPosition,          ; 當前座標
-        OFFSET count         ; 實際寫入的字元數量
-    ret
-PrintAscii ENDP
 
 END main

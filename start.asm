@@ -23,6 +23,15 @@ line4Len DWORD SIZEOF asciiLine4 - 1
 platformLine BYTE "==============", 0
 platformLen DWORD SIZEOF platformLine - 1
 
+; 定義垂直線 * 的字串和長度
+verticalLine BYTE "*", 0
+verticalLineLen DWORD SIZEOF verticalLine - 1
+
+; 起始座標和生成限制
+xyVertical COORD <12, 24>      ; 設定垂直線的生成座標
+verticalCount DWORD 0          ; 當前生成數量
+verticalMax DWORD 20           ; 最大生成數量
+
 main EQU start@0
 
 .code
@@ -71,10 +80,44 @@ main PROC
     mov eax, platformLen  ; 平台的總寬度為 14
     call PrintAscii
 
-    ; 等待並清屏
-    call WaitMsg
-    call Clrscr
-    exit
+    ; 初始化生成數量
+    mov verticalCount, 0
+
+    ; 進入按鍵監聽循環
+KeyLoop:
+    call ReadChar          ; 等待並讀取按鍵輸入
+    mov ah, 0              ; 清除高位掃描碼，只保留 ASCII 值
+
+    ; 如果按下空白鍵，執行生成 * 的邏輯
+    cmp al, 32             ; 檢查是否為空白鍵 (ASCII 值 32)
+    je GenerateVerticalLine
+
+    ; 按其他鍵則繼續等待
+    jmp KeyLoop
+
+GenerateVerticalLine:
+    ; 檢查是否達到最大生成數量
+    mov eax, verticalCount
+    cmp eax, verticalMax
+    jae KeyLoop            ; 如果達到最大數量，返回監聽循環
+
+    ; 打印 * 到當前位置
+    lea ecx, verticalLine
+    mov eax, verticalLineLen
+    INVOKE WriteConsoleOutputCharacter,
+           outputHandle,    ; 控制台句柄
+           ecx,             ; 字符串 * 的地址
+           eax,             ; 字符串的長度
+           xyVertical,      ; 打印位置
+           OFFSET count     ; 實際寫入的字元數
+
+    ; 更新座標和生成計數
+    dec xyVertical.Y        ; 向上移動一行
+    inc verticalCount       ; 增加生成數量
+
+    ; 返回按鍵監聽
+    jmp KeyLoop
+
 main ENDP
 
 ; 打印 ASCII 圖形的子程序

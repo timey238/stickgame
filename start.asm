@@ -21,7 +21,7 @@ randomnum WORD ?
 verticalLine BYTE "*"
 ; 起始座標和生成限制
 xyVertical COORD <10, 25>      ; 設定垂直線的生成座標
-testCoord COORD <76, 25>
+testCoord COORD <76, 10>
 verticalCount DWORD 0          ; 當前生成數量
 verticalMax DWORD 100           ; 最大生成數量
 blankLine BYTE "        ", 0   ; 每行的空白字元，寬度要與 ASCII 藝術圖一致
@@ -140,6 +140,7 @@ main PROC
     inc eax ; range 1~20 store in eax
     mov randomnum, ax
 
+
     mov ax, (COORD PTR platformb_xy).X ; 設生成起始位置
     sub ax, randomnum
     mov (COORD PTR platformb_xy).X, ax
@@ -164,9 +165,8 @@ Generate_plat: ; 生成平台
 
     ; 初始化生成數量
     mov verticalCount, 0
-
-    ; 進入按鍵監聽循環
-KeyLoop:
+    
+KeyLoop:   ; 進入按鍵監聽循環
     call ReadChar          ; 等待並讀取按鍵輸入
     mov ah, 0              ; 清除高位掃描碼，只保留 ASCII 值
 
@@ -217,7 +217,32 @@ GoToNextPlatform:
     cmp (COORD PTR cat_xy).X, ax
     jne moving
 
-    je KeyLoop
+    mov ax, (COORD PTR cat_destination_xy).X
+    add ax, 8
+    mov (COORD PTR testCoord).X, ax
+
+    
+    mov (COORD PTR testCoord).Y, 9
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR platform0,         ; Pointer to ASCII art
+           1,       ; Length of ASCII art
+           testCoord,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    mov (COORD PTR testCoord).Y, 10
+
+
+    mov ax, (COORD PTR platformb_xy).X
+    sub ax, randomnum
+    cmp ax, (COORD PTR testCoord).X
+    jg Fail
+    mov ax, (COORD PTR platformb_xy).X
+    add ax, randomnum
+    sub ax, 6
+    cmp ax, (COORD PTR testCoord).X
+    jl Fail
+    jmp Success
+    ; jmp KeyLoop
 
 
 moving:
@@ -228,7 +253,23 @@ moving:
     INVOKE Sleep, 25
     jmp GoToNextPlatform
 
+       
+Fail:
+    jmp KeyLoop
+
+Success:
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR platform0,         ; Pointer to ASCII art
+           1,       ; Length of ASCII art
+           testCoord,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    jmp KeyLoop
+
     exit
 main ENDP
 
 END main
+                              
+********************************====
+===============================

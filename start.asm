@@ -143,7 +143,6 @@ SetDestination PROC
     ret
 SetDestination ENDP
 
-
 main PROC
     ; Set the console code page to 437 (supports box drawing characters)
     INVOKE SetConsoleOutputCP, 437

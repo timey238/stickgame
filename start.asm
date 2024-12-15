@@ -28,9 +28,9 @@ verticalLine BYTE "*", 0
 verticalLineLen DWORD SIZEOF verticalLine - 1
 
 ; 起始座標和生成限制
-xyVertical COORD <12, 24>      ; 設定垂直線的生成座標
+xyVertical COORD <14, 25>      ; 設定垂直線的生成座標
 verticalCount DWORD 0          ; 當前生成數量
-verticalMax DWORD 20           ; 最大生成數量
+verticalMax DWORD 100           ; 最大生成數量
 
 main EQU start@0
 
@@ -112,11 +112,12 @@ GenerateVerticalLine:
            OFFSET count     ; 實際寫入的字元數
 
     ; 更新座標和生成計數
-    dec xyVertical.Y        ; 向上移動一行
+    inc xyVertical.X        ; 向上移動一行
     inc verticalCount       ; 增加生成數量
 
     ; 返回按鍵監聽
     jmp KeyLoop
+
 
 main ENDP
 

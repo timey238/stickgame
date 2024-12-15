@@ -28,9 +28,49 @@ blankLine BYTE "        ", 0   ; 每行的空白字元，寬度要與 ASCII 藝�
 
 outputHandle DWORD ?
 cellsWritten DWORD ?
+score_char BYTE "Score: 00000"
+score_xy COORD <90, 1>
 
 .code
 SetConsoleOutputCP PROTO STDCALL :DWORD
+
+IncScore PROC
+    inc score_char[11]
+    cmp score_char[11], 58
+    jne L1
+    mov score_char[11], 48
+
+    inc score_char[10]
+    cmp score_char[10], 58
+    jne L1
+    mov score_char[10], 48
+
+    inc score_char[9]
+    cmp score_char[9], 58
+    jne L1
+    mov score_char[9], 48
+
+    inc score_char[8]
+    cmp score_char[8], 58
+    jne L1
+    mov score_char[8], 48
+    
+    inc score_char[7]
+    cmp score_char[7], 58
+    jne L1
+    mov score_char[7], 48
+L1:
+    ret
+IncScore ENDP
+
+DrawScore PROC
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR score_char,         ; Pointer to ASCII art
+           LENGTHOF score_char,       ; Length of ASCII art
+           score_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+DrawScore ENDP
 
 ClearPreviousCat PROC
     ; 保存原始 Y 值
@@ -146,6 +186,8 @@ SetDestination ENDP
 ; 顯示橋梁
 ShowBridge PROC
     mov ecx, verticalCount
+    cmp verticalCount, 0
+    jz L2
 L1:
     push ecx
     INVOKE WriteConsoleOutputCharacter,
@@ -158,6 +200,8 @@ L1:
     INVOKE Sleep, 10
     pop ecx
     Loop L1
+    mov verticalCount, 0
+L2:
     ret
 ShowBridge ENDP
 
@@ -172,6 +216,7 @@ main PROC
 
     INVOKE DrawCat
     INVOKE DrawInit
+    INVOKE DrawScore
 
     INVOKE SetDestination  
 
@@ -206,7 +251,15 @@ KeyLoop:   ; 進入按鍵監聽循環
     cmp al, 99
     je ShowTheBridge
 
+    cmp al, 112
+    je Cheat
+
     ; 按其他鍵則繼續等待
+    jmp KeyLoop
+
+Cheat:
+    INVOKE IncScore
+    INVOKE DrawScore
     jmp KeyLoop
 
 GenerateVerticalLine:
@@ -233,7 +286,6 @@ ShowTheBridge:
 
 ; 移動至目標地
 GoToNextPlatform:
-
     mov ax, (COORD PTR cat_destination_xy).X
     add ax, 6        ; magic!
     cmp (COORD PTR cat_xy).X, ax
@@ -286,6 +338,8 @@ Success:
            1,       ; Length of ASCII art
            testCoord,       ; Starting position (top-left corner)
            ADDR cellsWritten ; Number of characters written
+    
+    INVOKE IncScore
     ; 清屏
     call Clrscr
     mov (COORD PTR cat_xy).X, 2
@@ -294,6 +348,7 @@ Success:
     mov (COORD PTR cat_destination_xy).Y, 21
     INVOKE DrawCat
     INVOKE DrawInit
+    INVOKE DrawScore
     INVOKE SetDestination
 
     mov (COORD PTR xyVertical).X, 10

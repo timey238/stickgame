@@ -108,6 +108,16 @@ PrintStartMenu PROC
     ret
 PrintStartMenu ENDP
 
+DrawScore PROC
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR score_char,         ; Pointer to ASCII art
+           LENGTHOF score_char,       ; Length of ASCII art
+           score_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    ret
+DrawScore ENDP
+
 PrintEndMenu PROC
     call Clrscr
     mov retry_xy.Y, 5
@@ -139,6 +149,10 @@ PrintEndMenu PROC
     call PrintToMenu
     lea ecx, toMenu6
     call PrintToMenu
+
+    mov (COORD PTR score_xy).X, 55
+    mov (COORD PTR score_xy).Y, 26
+    INVOKE DrawScore
 
     lea ecx, selectBlock
     call PrintselectBlock
@@ -335,16 +349,6 @@ L1:
     ret
 IncScore ENDP
 
-DrawScore PROC
-    INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR score_char,         ; Pointer to ASCII art
-           LENGTHOF score_char,       ; Length of ASCII art
-           score_xy,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
-    ret
-DrawScore ENDP
-
 ; 顯示橋梁
 ShowBridge PROC
     mov ecx, verticalCount
@@ -388,6 +392,8 @@ RunGame PROC
     mov score_char[11], 48
     mov last_random, 7
     mov randomnum, 0
+    mov (COORD PTR score_xy).X, 90
+    mov (COORD PTR score_xy).Y, 1
 
 Start:
     INVOKE DrawScore

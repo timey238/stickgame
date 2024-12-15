@@ -143,6 +143,22 @@ SetDestination PROC
     ret
 SetDestination ENDP
 
+; 顯示橋梁
+ShowBridge PROC
+    mov ecx, verticalCount
+L1:
+    INVOKE WriteConsoleOutputCharacter,
+           outputHandle,    ; 控制台句柄
+           ADDR verticalLine,  ; 字符串 * 的地址
+           LENGTHOF verticalLine,             ; 字符串的長度
+           xyVertical,      ; 打印位置
+           ADDR cellsWritten   ; 實際寫入的字元數
+    inc (COORD PTR xyVertical).X
+    INVOKE Sleep, 10
+    Loop L1
+    ret
+ShowBridge ENDP
+
 main PROC
     ; Set the console code page to 437 (supports box drawing characters)
     INVOKE SetConsoleOutputCP, 437
@@ -186,7 +202,7 @@ KeyLoop:   ; 進入按鍵監聽循環
 
     ; 按下c鍵，移動至目標地
     cmp al, 99
-    je GoToNextPlatform
+    je ShowTheBridge
 
     ; 按其他鍵則繼續等待
     jmp KeyLoop
@@ -197,17 +213,7 @@ GenerateVerticalLine:
     cmp eax, verticalMax
     jae KeyLoop            ; 如果達到最大數量，返回監聽循環
 
-    ; 打印 * 到當前位置
-    INVOKE WriteConsoleOutputCharacter,
-           outputHandle,    ; 控制台句柄
-           ADDR verticalLine,  ; 字符串 * 的地址
-           LENGTHOF verticalLine,             ; 字符串的長度
-           xyVertical,      ; 打印位置
-           ADDR cellsWritten   ; 實際寫入的字元數
-       
-
     ; 更新座標和生成計數
-    inc xyVertical.X        ; 向上移動一行
     inc verticalCount       ; 增加生成數量
 
     ; 設定目標座標
@@ -218,10 +224,14 @@ GenerateVerticalLine:
     ; 返回按鍵監聽
     jmp KeyLoop
 
-
+; 顯示橋梁
+ShowTheBridge:
+    INVOKE ShowBridge
+    jmp GoToNextPlatform
 
 ; 移動至目標地
 GoToNextPlatform:
+
     mov ax, (COORD PTR cat_destination_xy).X
     add ax, 6        ; magic!
     cmp (COORD PTR cat_xy).X, ax
@@ -268,6 +278,12 @@ Fail:
     jmp KeyLoop
 
 Success:
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR platform0,         ; Pointer to ASCII art
+           1,       ; Length of ASCII art
+           testCoord,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
     ; 清屏
     call Clrscr
     mov (COORD PTR cat_xy).X, 2

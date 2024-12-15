@@ -3,6 +3,7 @@ INCLUDE Irvine32.inc
 main EQU start@0
 
 .data
+losed BYTE 0
 ;定義開始畫面的文字
 start1 BYTE "  _________ __                 __   ", 0
 start2 BYTE " /   _____//  |______ ________/  |_ ", 0
@@ -70,6 +71,9 @@ score_xy COORD <90, 1>
 .code
 SetConsoleOutputCP PROTO STDCALL :DWORD
 PrintStartMenu PROC
+    call Clrscr
+    mov start_xy.Y, 5
+    mov exit_xy.Y, 15
     ; 打印標題
     lea ecx, start1
     call PrintStart
@@ -105,7 +109,9 @@ PrintStartMenu PROC
 PrintStartMenu ENDP
 
 PrintEndMenu PROC
-call Clrscr
+    call Clrscr
+    mov retry_xy.Y, 5
+    mov toMenu_xy.Y, 15
     ; 打印標題
     lea ecx, retry1
     call PrintRetry
@@ -362,7 +368,9 @@ L2:
 ShowBridge ENDP
 
 RunGame PROC
+
     call Clrscr
+
 Start:
     INVOKE DrawScore
     call DrawCat
@@ -468,6 +476,8 @@ moving:
     INVOKE Sleep, 25
     jmp GoToNextPlatform
 
+
+
 Success:
     call Clrscr ; 清屏
     mov verticalCount, 0
@@ -494,18 +504,21 @@ Success:
     jmp Start
 
 Fail:
+    mov losed, 1
     call PrintEndMenu
-    ret
 
+    ret
 RunGame ENDP
 
 main PROC
 
     INVOKE SetConsoleOutputCP, 437
     INVOKE GetStdHandle, STD_OUTPUT_HANDLE
+
     mov outputHandle, eax
     call Clrscr
     call PrintStartMenu
+
 
 KeyLoop_StartMenu:
     call ReadChar
@@ -525,17 +538,30 @@ KeyLoop_StartMenu:
     je pressEnter
     jmp KeyLoop_StartMenu
 
+
 pressEnter:
     movzx eax, (COORD PTR selectBlock_xy).Y
     .if eax == 8
+        mov losed, 0
         call RunGame
+        jmp KeyLoop_StartMenu
     .endif
+    cmp losed, 1
+    je toMenu
     .if eax == 18
         exit
     .endif
 
-ExitGame:
-    exit
+toMenu:
+    call Clrscr
+    mov losed, 0
+    mov (COORD PTR selectBlock_xy).Y, 8
+    call PrintStartMenu
+    call ClearselectBlock
+    call PrintselectBlock
+    jmp KeyLoop_StartMenu
 
+    exit
 main ENDP
+
 END main

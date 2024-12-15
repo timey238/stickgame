@@ -370,6 +370,24 @@ ShowBridge ENDP
 RunGame PROC
 
     call Clrscr
+    mov verticalCount, 0
+    mov (COORD PTR platform0_xy).X, 9
+    mov (COORD PTR platform0_xy).Y, 19
+    mov (COORD PTR platformb_xy).X, 85
+    mov (COORD PTR platformb_xy).Y, 19
+    mov (COORD PTR cat_xy).X, 9
+    mov (COORD PTR cat_xy).Y, 15
+    mov (COORD PTR cat_destination_xy).X, 16
+    mov (COORD PTR cat_destination_xy).Y, 15
+    mov (COORD PTR xyVertical).X, 16
+    mov (COORD PTR xyVertical).Y, 19
+    mov score_char[7], 48
+    mov score_char[8], 48
+    mov score_char[9], 48
+    mov score_char[10], 48
+    mov score_char[11], 48
+    mov last_random, 7
+    mov randomnum, 0
 
 Start:
     INVOKE DrawScore

@@ -197,7 +197,7 @@ GenerateVerticalLine:
        
 
     ; 更新座標和生成計數
-    inc xyVertical.X        ; 向右移動一行
+    dec xyVertical.Y        ; 向上移動一行
     inc verticalCount       ; 增加生成數量
 
     ; 設定目標座標

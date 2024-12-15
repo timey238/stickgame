@@ -147,6 +147,7 @@ SetDestination ENDP
 ShowBridge PROC
     mov ecx, verticalCount
 L1:
+    push ecx
     INVOKE WriteConsoleOutputCharacter,
            outputHandle,    ; 控制台句柄
            ADDR verticalLine,  ; 字符串 * 的地址
@@ -155,6 +156,7 @@ L1:
            ADDR cellsWritten   ; 實際寫入的字元數
     inc (COORD PTR xyVertical).X
     INVOKE Sleep, 10
+    pop ecx
     Loop L1
     ret
 ShowBridge ENDP

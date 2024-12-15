@@ -269,12 +269,6 @@ Fail:
     jmp KeyLoop
 
 Success:
-    INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR platform0,         ; Pointer to ASCII art
-           1,       ; Length of ASCII art
-           testCoord,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
     ; 清屏
     call Clrscr
     mov (COORD PTR cat_xy).X, 2

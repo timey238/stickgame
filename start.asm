@@ -114,17 +114,8 @@ DrawCat PROC
     ret
 DrawCat ENDP
 
-main PROC
-    ; Set the console code page to 437 (supports box drawing characters)
-    INVOKE SetConsoleOutputCP, 437
-
-    ; Get the console output handle
-    INVOKE GetStdHandle, STD_OUTPUT_HANDLE
-    mov outputHandle, eax
-    call Clrscr           ; 清屏
-
-    INVOKE DrawCat
-
+; 生成起始平台
+DrawInit PROC
     add cat_xy.Y, 4
     INVOKE WriteConsoleOutputCharacter, 
            outputHandle,     ; Console output handle
@@ -133,7 +124,10 @@ main PROC
            cat_xy,       ; Starting position (bottom of cat)
            ADDR cellsWritten ; Number of characters written
     sub cat_xy.Y, 4
+    ret
+DrawInit ENDP
 
+SetDestination PROC
     call Randomize ; 設亂數種子
     mov eax, 19
     call RandomRange
@@ -145,7 +139,24 @@ main PROC
     sub ax, randomnum
     mov (COORD PTR platformb_xy).X, ax
     mov cx, randomnum ; 設為平台總長 randomnum
-    add cx, randomnum       
+    add cx, randomnum  
+    ret
+SetDestination ENDP
+
+
+main PROC
+    ; Set the console code page to 437 (supports box drawing characters)
+    INVOKE SetConsoleOutputCP, 437
+
+    ; Get the console output handle
+    INVOKE GetStdHandle, STD_OUTPUT_HANDLE
+    mov outputHandle, eax
+    call Clrscr           ; 清屏
+
+    INVOKE DrawCat
+    INVOKE DrawInit
+
+    INVOKE SetDestination  
 
 Generate_plat: ; 生成平台
     push ecx
@@ -197,7 +208,7 @@ GenerateVerticalLine:
        
 
     ; 更新座標和生成計數
-    dec xyVertical.Y        ; 向上移動一行
+    inc xyVertical.X        ; 向上移動一行
     inc verticalCount       ; 增加生成數量
 
     ; 設定目標座標
@@ -264,12 +275,25 @@ Success:
            1,       ; Length of ASCII art
            testCoord,       ; Starting position (top-left corner)
            ADDR cellsWritten ; Number of characters written
-    jmp KeyLoop
+    ; 清屏
+    call Clrscr
+    mov (COORD PTR cat_xy).X, 2
+    mov (COORD PTR cat_xy).Y, 21
+    mov (COORD PTR cat_destination_xy).X, 2
+    mov (COORD PTR cat_destination_xy).Y, 21
+    INVOKE DrawCat
+    INVOKE DrawInit
+    INVOKE SetDestination
+
+    mov (COORD PTR xyVertical).X, 10
+    mov (COORD PTR xyVertical).Y, 25
+    jmp Generate_plat
+
+
+    ; jmp KeyLoop
 
     exit
 main ENDP
 
 END main
                               
-********************************====
-===============================

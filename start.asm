@@ -199,6 +199,7 @@ main PROC
     mov outputHandle, eax
 
 Start:
+    INVOKE DrawScore
     call DrawCat
 
     invoke GeneratePlatform, platform0_xy, last_random
@@ -327,6 +328,7 @@ Success:
     mov (COORD PTR xyVertical).Y, 19
     mov bx, randomnum
     mov last_random, bx
+    INVOKE IncScore
     jmp Start
     exit
 main ENDP

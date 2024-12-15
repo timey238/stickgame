@@ -362,9 +362,7 @@ L2:
 ShowBridge ENDP
 
 RunGame PROC
-
     call Clrscr
-
 Start:
     INVOKE DrawScore
     call DrawCat
@@ -470,8 +468,6 @@ moving:
     INVOKE Sleep, 25
     jmp GoToNextPlatform
 
-
-
 Success:
     call Clrscr ; 清屏
     mov verticalCount, 0
@@ -499,6 +495,7 @@ Success:
 
 Fail:
     call PrintEndMenu
+    ret
 
 RunGame ENDP
 
@@ -506,11 +503,9 @@ main PROC
 
     INVOKE SetConsoleOutputCP, 437
     INVOKE GetStdHandle, STD_OUTPUT_HANDLE
-
     mov outputHandle, eax
     call Clrscr
     call PrintStartMenu
-
 
 KeyLoop_StartMenu:
     call ReadChar
@@ -530,7 +525,6 @@ KeyLoop_StartMenu:
     je pressEnter
     jmp KeyLoop_StartMenu
 
-
 pressEnter:
     movzx eax, (COORD PTR selectBlock_xy).Y
     .if eax == 8
@@ -543,7 +537,5 @@ pressEnter:
 ExitGame:
     exit
 
-    exit
 main ENDP
-
 END main

@@ -3,6 +3,29 @@ INCLUDE Irvine32.inc
 main EQU start@0
 
 .data
+outputHandle DWORD ?            ; 控制台句柄
+cellsWritten DWORD ?            ; 實際寫入的字元數
+
+;定義開始畫面的文字
+start1 BYTE "  _________ __                 __   ", 0
+start2 BYTE " /   _____//  |______ ________/  |_ ", 0
+start3 BYTE " \_____  \\   __\__  \\_  __ \   __\", 0
+start4 BYTE " /        \|  |  / __ \|  | \/|  |  ", 0
+start5 BYTE "/_______  /|__| (____  /__|   |__|  ", 0
+start6 BYTE "        \/           \/             ", 0
+start_xy COORD <40, 5>
+
+exit1 BYTE "___________      .__  __   ", 0
+exit2 BYTE "\_   _____/__  __|__|/  |_ ", 0
+exit3 BYTE " |    __)_\  \/  /  \   __\", 0
+exit4 BYTE " |        \>    <|  ||  |  ", 0
+exit5 BYTE "/_______  /__/\_ \__||__|  ", 0
+exit6 BYTE "        \/      \/         ", 0
+exit_xy COORD <45, 15>
+
+selectBlock BYTE "--"
+selectBlock_xy COORD <80, 8>
+
 ; 定義 cat ASCII 圖形的每一行
 cat1 BYTE " \    /\", 0
 cat2 BYTE "  )  ( ')", 0
@@ -26,11 +49,78 @@ verticalCount DWORD 0          ; 當前生成數量
 verticalMax DWORD 100           ; 最大生成數量
 blankLine BYTE "        ", 0   ; 每行的空白字元，寬度要與 ASCII 藝術圖一致
 
-outputHandle DWORD ?
-cellsWritten DWORD ?
+;outputHandle DWORD ?
+;cellsWritten DWORD ?
 
 .code
 SetConsoleOutputCP PROTO STDCALL :DWORD
+
+PrintStartMenu PROC
+    ; 打印標題
+    lea ecx, start1
+    call PrintStart
+    lea ecx, start2
+    call PrintStart
+    lea ecx, start3
+    call PrintStart
+    lea ecx, start4
+    call PrintStart
+    lea ecx, start5
+    call PrintStart
+    lea ecx, start6
+    call PrintStart
+
+    ; 打印底部文字
+    lea ecx, exit1
+    call PrintExit
+    lea ecx, exit2
+    call PrintExit
+    lea ecx, exit3
+    call PrintExit
+    lea ecx, exit4
+    call PrintExit
+    lea ecx, exit5
+    call PrintExit
+    lea ecx, exit6
+    call PrintExit
+
+    lea ecx, selectBlock
+    call PrintselectBlock
+
+    ret
+PrintStartMenu ENDP
+
+PrintStart PROC
+    INVOKE WriteConsoleOutputCharacter,
+        outputHandle,
+        ecx,
+        LENGTHOF start1,     ; 每行字元數
+        start_xy,            ; 當前座標
+        ADDR cellsWritten
+    inc (COORD PTR start_xy).Y
+    ret
+PrintStart ENDP
+
+PrintExit PROC
+    INVOKE WriteConsoleOutputCharacter,
+        outputHandle,
+        ecx,
+        LENGTHOF exit1,     ; 每行字元數
+        exit_xy,            ; 當前座標
+        ADDR cellsWritten
+    inc (COORD PTR exit_xy).Y
+    ret
+PrintExit ENDP
+
+PrintselectBlock PROC
+    INVOKE WriteConsoleOutputCharacter,
+        outputHandle,
+        ecx,
+        LENGTHOF selectBlock,     ; 每行字元數
+        selectBlock_xy,            ; 當前座標
+        ADDR cellsWritten
+    ret
+PrintselectBlock ENDP
 
 ClearPreviousCat PROC
     ; 保存原始 Y 值
@@ -114,17 +204,8 @@ DrawCat PROC
     ret
 DrawCat ENDP
 
-main PROC
-    ; Set the console code page to 437 (supports box drawing characters)
-    INVOKE SetConsoleOutputCP, 437
-
-    ; Get the console output handle
-    INVOKE GetStdHandle, STD_OUTPUT_HANDLE
-    mov outputHandle, eax
-    call Clrscr           ; 清屏
-
-    INVOKE DrawCat
-
+; 生成起始平台
+DrawInit PROC
     add cat_xy.Y, 4
     INVOKE WriteConsoleOutputCharacter, 
            outputHandle,     ; Console output handle
@@ -133,7 +214,10 @@ main PROC
            cat_xy,       ; Starting position (bottom of cat)
            ADDR cellsWritten ; Number of characters written
     sub cat_xy.Y, 4
+    ret
+DrawInit ENDP
 
+SetDestination PROC
     call Randomize ; 設亂數種子
     mov eax, 19
     call RandomRange
@@ -145,7 +229,16 @@ main PROC
     sub ax, randomnum
     mov (COORD PTR platformb_xy).X, ax
     mov cx, randomnum ; 設為平台總長 randomnum
-    add cx, randomnum       
+    add cx, randomnum
+        ret
+SetDestination ENDP
+
+RunGame PROC
+    
+    call Clrscr           ; 清屏
+    INVOKE DrawCat
+    INVOKE DrawInit
+    INVOKE SetDestination 
 
 Generate_plat: ; 生成平台
     push ecx
@@ -165,7 +258,7 @@ Generate_plat: ; 生成平台
 
     ; 初始化生成數量
     mov verticalCount, 0
-    
+
 KeyLoop:   ; 進入按鍵監聽循環
     call ReadChar          ; 等待並讀取按鍵輸入
     mov ah, 0              ; 清除高位掃描碼，只保留 ASCII 值
@@ -197,7 +290,7 @@ GenerateVerticalLine:
        
 
     ; 更新座標和生成計數
-    dec xyVertical.Y        ; 向上移動一行
+    inc xyVertical.X        ; 向上移動一行
     inc verticalCount       ; 增加生成數量
 
     ; 設定目標座標
@@ -264,7 +357,63 @@ Success:
            1,       ; Length of ASCII art
            testCoord,       ; Starting position (top-left corner)
            ADDR cellsWritten ; Number of characters written
-    jmp KeyLoop
+    ; 清屏
+    call Clrscr
+    mov (COORD PTR cat_xy).X, 2
+    mov (COORD PTR cat_xy).Y, 21
+    mov (COORD PTR cat_destination_xy).X, 2
+    mov (COORD PTR cat_destination_xy).Y, 21
+    INVOKE DrawCat
+    INVOKE DrawInit
+    INVOKE SetDestination
+
+    mov (COORD PTR xyVertical).X, 10
+    mov (COORD PTR xyVertical).Y, 25
+    jmp Generate_plat
+
+
+    ; jmp KeyLoop
+RunGame ENDP
+
+main PROC
+
+    INVOKE SetConsoleOutputCP, 437
+    INVOKE GetStdHandle, STD_OUTPUT_HANDLE
+
+    mov outputHandle, eax
+    call Clrscr
+    call PrintStartMenu
+
+
+KeyLoop_StartMenu:
+    call ReadChar
+    cmp al, 0Dh
+    je pressEnter
+    cmp al, 48h
+    je selectStart
+    cmp al, 50h
+    je selectExit
+    jmp KeyLoop_StartMenu
+
+selectStart:
+    mov (COORD PTR selectBlock_xy).Y, 8
+    call PrintselectBlock
+    jmp KeyLoop_StartMenu
+
+selectExit:
+    mov (COORD PTR selectBlock_xy).Y, 18
+    call PrintselectBlock
+    jmp KeyLoop_StartMenu
+
+pressEnter:
+    movzx eax, (COORD PTR selectBlock_xy).Y
+    cmp eax, 8
+    je RunGame
+    cmp eax, 18
+    je ExitGame
+
+ExitGame:
+    exit
 
     exit
 main ENDP

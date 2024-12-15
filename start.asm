@@ -9,8 +9,9 @@ cat2 BYTE "  )  ( ')", 0
 cat3 BYTE " (  /  )", 0
 cat4 BYTE "  \(__)|", 0
 cat_xy COORD <2, 21>
-; 定義初始平台的字符 (平台寬度為 14)
-platform0 BYTE "==============", 0
+cat_destination_xy COORD <2, 21>
+; 定義初始平台的字符 (平台寬度為 8)
+platform0 BYTE "========", 0
 ; 定義生成目標平台的字符和其中心座標
 platformb BYTE "=", 0
 platformb_xy COORD <75, 25>
@@ -19,15 +20,56 @@ randomnum WORD ?
 ; 定義垂直線 * 的字串和長度
 verticalLine BYTE "***", 0
 ; 起始座標和生成限制
-xyVertical COORD <15, 25>      ; 設定垂直線的生成座標
+xyVertical COORD <9, 25>      ; 設定垂直線的生成座標
 verticalCount DWORD 0          ; 當前生成數量
-verticalMax DWORD 20           ; 最大生成數量
+verticalMax DWORD 100           ; 最大生成數量
+blankLine BYTE "        ", 0   ; 每行的空白字元，寬度要與 ASCII 藝術圖一致
 
 outputHandle DWORD ?
 cellsWritten DWORD ?
 
 .code
 SetConsoleOutputCP PROTO STDCALL :DWORD
+
+ClearPreviousCat PROC
+    ; 保存原始 Y 值
+    push (COORD PTR cat_xy).Y
+
+    ; 清除貓的每一行
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR blankLine,         ; Pointer to ASCII art
+           LENGTHOF blankLine,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    dec (COORD PTR cat_xy).Y	; next line
+
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR blankLine,         ; Pointer to ASCII art
+           LENGTHOF blankLine,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    dec (COORD PTR cat_xy).Y	; next line
+
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR blankLine,         ; Pointer to ASCII art
+           LENGTHOF blankLine,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    dec (COORD PTR cat_xy).Y	; next line
+
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR blankLine,         ; Pointer to ASCII art
+           LENGTHOF blankLine,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    dec (COORD PTR cat_xy).Y	; next line
+    pop (COORD PTR cat_xy).Y
+    ret
+ClearPreviousCat ENDP
 
 main PROC
     ; Set the console code page to 437 (supports box drawing characters)
@@ -37,6 +79,9 @@ main PROC
     INVOKE GetStdHandle, STD_OUTPUT_HANDLE
     mov outputHandle, eax
     call Clrscr           ; 清屏
+
+    ; 保存原始 Y 值
+    push (COORD PTR cat_xy).Y
 
     ; Write the ASCII art to the console
     INVOKE WriteConsoleOutputCharacter, 
@@ -78,6 +123,9 @@ main PROC
            cat_xy,       ; Starting position (bottom of cat)
            ADDR cellsWritten ; Number of characters written
 
+    ; 恢復原始 Y 值
+    pop (COORD PTR cat_xy).Y
+
     call Randomize ; 設亂數種子
     mov eax, 19
     call RandomRange
@@ -118,6 +166,10 @@ KeyLoop:
     cmp al, 32             ; 檢查是否為空白鍵 (ASCII 值 32)
     je GenerateVerticalLine
 
+    ; 按下c鍵，移動至目標地
+    cmp al, 99
+    je GoToNextPlatform
+
     ; 按其他鍵則繼續等待
     jmp KeyLoop
 
@@ -137,11 +189,69 @@ GenerateVerticalLine:
            ADDR cellsWritten   ; 實際寫入的字元數
 
     ; 更新座標和生成計數
-    inc xyVertical.X        ; 向上移動一行
+    inc xyVertical.X        ; 向右移動一行
     inc verticalCount       ; 增加生成數量
+
+    ; 設定目標座標
+    mov ax, (COORD PTR cat_destination_xy).X
+    inc ax
+    mov (COORD PTR cat_destination_xy).X, ax
 
     ; 返回按鍵監聽
     jmp KeyLoop
+
+; 移動至目標地
+GoToNextPlatform:
+    mov ax, (COORD PTR cat_destination_xy).X
+    cmp (COORD PTR cat_xy).X, ax
+    jne moving
+    je KeyLoop
+
+moving:
+    call ClearPreviousCat
+    inc (COORD PTR cat_xy).X
+
+    ; 保存原始 Y 值
+    push (COORD PTR cat_xy).Y
+
+    ; Write the ASCII art to the console
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR cat1,         ; Pointer to ASCII art
+           LENGTHOF cat1,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    inc (COORD PTR cat_xy).Y	; next line
+
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR cat2,         ; Pointer to ASCII art
+           LENGTHOF cat2,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    inc (COORD PTR cat_xy).Y	; next line
+
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR cat3,         ; Pointer to ASCII art
+           LENGTHOF cat3,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    inc (COORD PTR cat_xy).Y	; next line
+
+    INVOKE WriteConsoleOutputCharacter, 
+           outputHandle,     ; Console output handle
+           ADDR cat4,         ; Pointer to ASCII art
+           LENGTHOF cat4,       ; Length of ASCII art
+           cat_xy,       ; Starting position (top-left corner)
+           ADDR cellsWritten ; Number of characters written
+    inc (COORD PTR cat_xy).Y	; next line
+
+    ; 恢復原始 Y 值
+    pop (COORD PTR cat_xy).Y
+
+    INVOKE Sleep, 25
+    jmp GoToNextPlatform
 
     exit
 main ENDP

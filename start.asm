@@ -115,12 +115,24 @@ PrintExit ENDP
 PrintselectBlock PROC
     INVOKE WriteConsoleOutputCharacter,
         outputHandle,
-        ecx,
+        ADDR selectBlock,
         LENGTHOF selectBlock,     ; 每行字元數
         selectBlock_xy,            ; 當前座標
         ADDR cellsWritten
     ret
 PrintselectBlock ENDP
+
+ClearselectBlock PROC
+    ; 用空格覆蓋之前的選擇區域
+    INVOKE WriteConsoleOutputCharacter,
+           outputHandle,    ; 控制台句柄
+           ADDR blankLine,             ; 空格字串的地址
+           2,               ; 長度為 2（覆蓋 "--"）
+           selectBlock_xy,  ; 選擇區域的座標
+           ADDR cellsWritten
+    ret
+ClearselectBlock ENDP
+
 
 ClearPreviousCat PROC
     ; 保存原始 Y 值
@@ -387,30 +399,31 @@ main PROC
 
 KeyLoop_StartMenu:
     call ReadChar
+    .IF ax == 4800h ; UP ARROW
+        call ClearselectBlock      ; 清除之前的選擇區域
+        mov (COORD PTR selectBlock_xy).Y, 8 ; 更新 Y 座標
+        call PrintselectBlock      ; 繪製新的選擇區域
+        jmp KeyLoop_StartMenu
+    .ENDIF
+    .IF ax == 5000h ; DOWN ARROW
+        call ClearselectBlock      ; 清除之前的選擇區域
+        mov (COORD PTR selectBlock_xy).Y, 18 ; 更新 Y 座標
+        call PrintselectBlock      ; 繪製新的選擇區域
+        jmp KeyLoop_StartMenu
+    .ENDIF
     cmp al, 0Dh
     je pressEnter
-    cmp al, 48h
-    je selectStart
-    cmp al, 50h
-    je selectExit
     jmp KeyLoop_StartMenu
 
-selectStart:
-    mov (COORD PTR selectBlock_xy).Y, 8
-    call PrintselectBlock
-    jmp KeyLoop_StartMenu
-
-selectExit:
-    mov (COORD PTR selectBlock_xy).Y, 18
-    call PrintselectBlock
-    jmp KeyLoop_StartMenu
 
 pressEnter:
     movzx eax, (COORD PTR selectBlock_xy).Y
-    cmp eax, 8
-    je RunGame
-    cmp eax, 18
-    je ExitGame
+    .if eax == 8
+        call RunGame
+    .endif
+    .if eax == 18
+        exit
+    .endif
 
 ExitGame:
     exit

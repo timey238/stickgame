@@ -430,7 +430,7 @@ Trial:
     loop Trial
     mov eax, edx
     
-    add eax, 4
+    add eax, 7
     cmp score, 20
     jg Skip
     inc eax

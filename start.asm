@@ -65,8 +65,11 @@ blankLine BYTE "        "   ; 每行的空白字元，寬度要與 ASCII 藝術�
 last_random WORD 7
 outputHandle DWORD ?
 cellsWritten DWORD ?
+score DWORD 0
 score_char BYTE "Score: 00000"
 score_xy COORD <90, 1>
+not_hidden BYTE "*********|"
+not_hidden_xy COORD <16, 19>
 
 .code
 SetConsoleOutputCP PROTO STDCALL :DWORD
@@ -321,6 +324,7 @@ Generate_plat: ; 生成平台
 GeneratePlatform ENDP
 
 IncScore PROC
+    inc score
     inc score_char[11]
     cmp score_char[11], 58
     jne L1
@@ -385,6 +389,7 @@ RunGame PROC
     mov (COORD PTR cat_destination_xy).Y, 15
     mov (COORD PTR xyVertical).X, 16
     mov (COORD PTR xyVertical).Y, 19
+    mov score, 0
     mov score_char[7], 48
     mov score_char[8], 48
     mov score_char[9], 48
@@ -415,9 +420,34 @@ Gen_init_plat:
     loop Gen_init_plat
     
     call Randomize ; 設亂數種子
-    mov eax, 15
+
+    mov ecx, 9  ; binomial
+    mov edx, 0
+Trial:
+    mov eax, 2
     call RandomRange
-    add eax, 7 ; range 7~27 store in eax
+    add edx, eax
+    loop Trial
+    mov eax, edx
+    
+    add eax, 7
+    cmp score, 20
+    jg Skip
+    inc eax
+    cmp score, 15
+    jg Skip
+    inc eax
+    cmp score, 10
+    jg Skip
+    inc eax
+    cmp score, 5
+    jg Skip
+    inc eax
+    cmp score, 2
+    jg Skip
+    inc eax
+
+Skip:
     mov randomnum, ax
     invoke GeneratePlatform, platformb_xy, randomnum
     inc (COORD PTR platformb_xy).Y
@@ -462,6 +492,7 @@ GenerateVerticalLine:
     mov eax, verticalCount
     cmp eax, verticalMax
     jae KeyLoop            ; 如果達到最大數量，返回監聽循環
+    
     
     inc verticalCount       ; 增加生成數量
     ; 設定目標座標

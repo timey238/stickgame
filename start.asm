@@ -51,25 +51,23 @@ cat_destination_xy COORD <16, 15>
 platformb BYTE "="
 ; 定義初始平台的中心座標
 platform0_xy COORD <9, 19>
-; 定義生成目標平台的字符和其中心座標
+; 定義生成目標平台的中心座標
 platformb_xy COORD <85, 19>
 ; 定義隨機的平台寬度
 randomnum WORD ?
-; 定義垂直線 * 的字串和長度
-verticalLine BYTE "*"
+; 定義水平線的字串
+HorizontalLine BYTE "*"
 ; 起始座標和生成限制
-xyVertical COORD <16, 19>      ; 設定垂直線的生成座標
-verticalCount DWORD 0          ; 當前生成數量
-verticalMax DWORD 110        ; 最大生成數量
-blankLine BYTE "        "   ; 每行的空白字元，寬度要與 ASCII 藝術圖一致
+xyHorizontal COORD <16, 19>      ; 設定水平線的生成座標
+HorizontalCount DWORD 0          ; 當前生成數量
+HorizontalMax DWORD 110        ; 最大生成數量
+blankLine BYTE "        "   ; 每行的空白字元
 last_random WORD 7
 outputHandle DWORD ?
 cellsWritten DWORD ?
 score DWORD 0
 score_char BYTE "Score: 00000"
 score_xy COORD <90, 1>
-not_hidden BYTE "*********|"
-not_hidden_xy COORD <16, 19>
 
 .code
 SetConsoleOutputCP PROTO STDCALL :DWORD
@@ -113,11 +111,11 @@ PrintStartMenu ENDP
 
 DrawScore PROC
     INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR score_char,         ; Pointer to ASCII art
-           LENGTHOF score_char,       ; Length of ASCII art
-           score_xy,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
+           outputHandle,     
+           ADDR score_char,         
+           LENGTHOF score_char,       
+           score_xy,       
+           ADDR cellsWritten 
     ret
 DrawScore ENDP
 
@@ -167,8 +165,8 @@ PrintStart PROC
     INVOKE WriteConsoleOutputCharacter,
         outputHandle,
         ecx,
-        LENGTHOF start1,     ; 每行字元數
-        start_xy,            ; 當前座標
+        LENGTHOF start1,     
+        start_xy,           
         ADDR cellsWritten
     inc (COORD PTR start_xy).Y
     ret
@@ -178,8 +176,8 @@ PrintExit PROC
     INVOKE WriteConsoleOutputCharacter,
         outputHandle,
         ecx,
-        LENGTHOF exit1,     ; 每行字元數
-        exit_xy,            ; 當前座標
+        LENGTHOF exit1,     
+        exit_xy,            
         ADDR cellsWritten
     inc (COORD PTR exit_xy).Y
     ret
@@ -189,8 +187,8 @@ PrintRetry PROC
     INVOKE WriteConsoleOutputCharacter,
         outputHandle,
         ecx,
-        LENGTHOF retry1,     ; 每行字元數
-        retry_xy,            ; 當前座標
+        LENGTHOF retry1,     
+        retry_xy,           
         ADDR cellsWritten
     inc (COORD PTR retry_xy).Y
     ret
@@ -200,8 +198,8 @@ PrintToMenu PROC
     INVOKE WriteConsoleOutputCharacter,
         outputHandle,
         ecx,
-        LENGTHOF toMenu1,     ; 每行字元數
-        toMenu_xy,            ; 當前座標
+        LENGTHOF toMenu1,   
+        toMenu_xy,            
         ADDR cellsWritten
     inc (COORD PTR toMenu_xy).Y
     ret
@@ -211,8 +209,8 @@ PrintselectBlock PROC
     INVOKE WriteConsoleOutputCharacter,
         outputHandle,
         ADDR selectBlock,
-        LENGTHOF selectBlock,     ; 每行字元數
-        selectBlock_xy,            ; 當前座標
+        LENGTHOF selectBlock,    
+        selectBlock_xy,            
         ADDR cellsWritten
     ret
 PrintselectBlock ENDP
@@ -239,26 +237,26 @@ DrawCat PROC
            ADDR cellsWritten ; Number of characters written
     inc (COORD PTR cat_xy).Y	; next line
     INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR cat2,         ; Pointer to ASCII art
-           LENGTHOF cat2,       ; Length of ASCII art
-           cat_xy,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
-    inc (COORD PTR cat_xy).Y	; next line
+           outputHandle,    
+           ADDR cat2,       
+           LENGTHOF cat2,     
+           cat_xy,       
+           ADDR cellsWritten 
+    inc (COORD PTR cat_xy).Y	
     INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR cat3,         ; Pointer to ASCII art
-           LENGTHOF cat3,       ; Length of ASCII art
-           cat_xy,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
-    inc (COORD PTR cat_xy).Y	; next line
+           outputHandle,    
+           ADDR cat3,      
+           LENGTHOF cat3,      
+           cat_xy,       
+           ADDR cellsWritten
+    inc (COORD PTR cat_xy).Y	
     INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR cat4,         ; Pointer to ASCII art
-           LENGTHOF cat4,       ; Length of ASCII art
-           cat_xy,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
-    inc (COORD PTR cat_xy).Y	; next line
+           outputHandle,     
+           ADDR cat4,        
+           LENGTHOF cat4,     
+           cat_xy,       
+           ADDR cellsWritten 
+    inc (COORD PTR cat_xy).Y	
     pop (COORD PTR cat_xy).Y
     ret
 DrawCat ENDP
@@ -275,35 +273,36 @@ ClearCat PROC
            ADDR cellsWritten ; Number of characters written
     inc (COORD PTR cat_xy).Y	; next line
     INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR blankLine,         ; Pointer to ASCII art
-           LENGTHOF blankLine,       ; Length of ASCII art
-           cat_xy,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
-    inc (COORD PTR cat_xy).Y	; next line
+           outputHandle,     
+           ADDR blankLine,         
+           LENGTHOF blankLine,       
+           cat_xy,       
+           ADDR cellsWritten 
+    inc (COORD PTR cat_xy).Y	
     INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR blankLine,         ; Pointer to ASCII art
-           LENGTHOF blankLine,       ; Length of ASCII art
-           cat_xy,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
-    inc (COORD PTR cat_xy).Y	; next line
+           outputHandle,     
+           ADDR blankLine,        
+           LENGTHOF blankLine,       
+           cat_xy,       
+           ADDR cellsWritten 
+    inc (COORD PTR cat_xy).Y	
     INVOKE WriteConsoleOutputCharacter, 
-           outputHandle,     ; Console output handle
-           ADDR blankLine,         ; Pointer to ASCII art
-           LENGTHOF blankLine,       ; Length of ASCII art
-           cat_xy,       ; Starting position (top-left corner)
-           ADDR cellsWritten ; Number of characters written
+           outputHandle,     
+           ADDR blankLine,         
+           LENGTHOF blankLine,      
+           cat_xy,      
+           ADDR cellsWritten 
     ; 恢復原始 Y 值
     pop (COORD PTR cat_xy).Y
     ret
 ClearCat ENDP
 
 ; 以platform_xy為中心，生成2*platform_hlen長的platform
-GeneratePlatform PROC USES eax ecx, platform_xy:COORD, platform_hlen:WORD
-    mov ax, platform_xy.X ; 設生成起始位置
+GeneratePlatform PROC USES eax ecx esi, platform_xy:PTR COORD, platform_hlen:WORD
+    mov esi, platform_xy
+    mov ax, (COORD PTR [esi]).X ; 設生成起始位置
     sub ax, platform_hlen
-    mov platform_xy.X, ax
+    mov (COORD PTR [esi]).X, ax
     mov cx, platform_hlen
     add cx, platform_hlen ; 設初始平台總長
 Generate_plat: ; 生成平台
@@ -312,14 +311,14 @@ Generate_plat: ; 生成平台
            outputHandle,     
            ADDR platformb,        
            LENGTHOF platformb,      
-           platform_xy,      
+           (COORD PTR [esi]),      
            ADDR cellsWritten 
-    inc platform_xy.X ; 每生成一格 X+1
+    inc (COORD PTR [esi]).X ; 每生成一格 X+1
     pop ecx
     loop Generate_plat
-    mov ax, platform_xy.X ; 回復platformb_xy.X成原來的值
+    mov ax, (COORD PTR [esi]).X ; 回復platformb_xy.X成原來的值
     sub ax, platform_hlen
-    mov platform_xy.X, ax
+    mov (COORD PTR [esi]).X, ax
     ret
 GeneratePlatform ENDP
 
@@ -355,22 +354,22 @@ IncScore ENDP
 
 ; 顯示橋梁
 ShowBridge PROC
-    mov ecx, verticalCount
-    cmp verticalCount, 0
+    mov ecx, HorizontalCount
+    cmp HorizontalCount, 0
     jz L2
 L1:
     push ecx
     INVOKE WriteConsoleOutputCharacter,
            outputHandle,    ; 控制台句柄
-           ADDR verticalLine,  ; 字符串 * 的地址
-           LENGTHOF verticalLine,             ; 字符串的長度
-           xyVertical,      ; 打印位置
+           ADDR HorizontalLine,  ; 字符串 * 的地址
+           LENGTHOF HorizontalLine,             ; 字符串的長度
+           xyHorizontal,      ; 打印位置
            ADDR cellsWritten   ; 實際寫入的字元數
-    inc (COORD PTR xyVertical).X
+    inc (COORD PTR xyHorizontal).X
     INVOKE Sleep, 10
     pop ecx
     Loop L1
-    mov verticalCount, 0
+    mov HorizontalCount, 0
 L2:
     ret
 ShowBridge ENDP
@@ -378,7 +377,7 @@ ShowBridge ENDP
 RunGame PROC
 
     call Clrscr
-    mov verticalCount, 0
+    mov HorizontalCount, 0
     mov (COORD PTR platform0_xy).X, 9
     mov (COORD PTR platform0_xy).Y, 19
     mov (COORD PTR platformb_xy).X, 85
@@ -387,8 +386,8 @@ RunGame PROC
     mov (COORD PTR cat_xy).Y, 15
     mov (COORD PTR cat_destination_xy).X, 16
     mov (COORD PTR cat_destination_xy).Y, 15
-    mov (COORD PTR xyVertical).X, 16
-    mov (COORD PTR xyVertical).Y, 19
+    mov (COORD PTR xyHorizontal).X, 16
+    mov (COORD PTR xyHorizontal).Y, 19
     mov score, 0
     mov score_char[7], 48
     mov score_char[8], 48
@@ -404,24 +403,24 @@ Start:
     INVOKE DrawScore
     call DrawCat
 
-    invoke GeneratePlatform, platform0_xy, last_random
+    invoke GeneratePlatform, ADDR platform0_xy, last_random
     inc (COORD PTR platform0_xy).Y
     sub last_random, 3
-    invoke GeneratePlatform, platform0_xy, last_random
+    invoke GeneratePlatform, ADDR platform0_xy, last_random
     inc (COORD PTR platform0_xy).Y
     sub last_random, 2
-    invoke GeneratePlatform, platform0_xy, last_random
+    invoke GeneratePlatform, ADDR platform0_xy, last_random
     inc (COORD PTR platform0_xy).Y
     sub last_random, 1
     mov ecx, 8
 Gen_init_plat:
-    invoke GeneratePlatform, platform0_xy, last_random
+    invoke GeneratePlatform, ADDR platform0_xy, last_random
     inc (COORD PTR platform0_xy).Y
     loop Gen_init_plat
     
     call Randomize ; 設亂數種子
 
-    mov ecx, 9  ; binomial
+    mov ecx, 9  ; 生成平台的寬度的機率分布是 binomial distribution
     mov edx, 0
 Trial:
     mov eax, 2
@@ -449,28 +448,36 @@ Trial:
 
 Skip:
     mov randomnum, ax
-    invoke GeneratePlatform, platformb_xy, randomnum
+
+    ; 隨機選取生成平台中心點
+    mov ax, 50
+    call RandomRange
+    add ax, (COORD PTR cat_xy).X
+    add ax, 37
+    mov (COORD PTR platformb_xy).X, ax
+    
+    invoke GeneratePlatform, ADDR platformb_xy, randomnum
     inc (COORD PTR platformb_xy).Y
     sub randomnum, 3
-    invoke GeneratePlatform, platformb_xy, randomnum
+    invoke GeneratePlatform, ADDR platformb_xy, randomnum
     inc (COORD PTR platformb_xy).Y
     sub randomnum, 2
-    invoke GeneratePlatform, platformb_xy, randomnum
+    invoke GeneratePlatform, ADDR platformb_xy, randomnum
     inc (COORD PTR platformb_xy).Y
     sub randomnum, 1
     mov ecx, 8
 Gen_plat:
-    invoke GeneratePlatform, platformb_xy, randomnum
+    invoke GeneratePlatform, ADDR platformb_xy, randomnum
     inc (COORD PTR platformb_xy).Y
     loop Gen_plat
-    mov randomnum, ax
+    add randomnum, 6 ; 回復randomnum
   
 KeyLoop:                   ; 進入按鍵監聽循環
     call ReadChar          ; 等待並讀取按鍵輸入
     mov ah, 0              ; 清除高位掃描碼，只保留 ASCII 值
     ; 如果按下空白鍵，執行生成 * 的邏輯
     cmp al, 32             ; 檢查是否為空白鍵 (ASCII 值 32)
-    je GenerateVerticalLine
+    je GenerateHorizontalLine
     ; 按下c鍵，移動至目標地
     cmp al, 99
 
@@ -482,19 +489,19 @@ KeyLoop:                   ; 進入按鍵監聽循環
     ; 按其他鍵則繼續等待
     jmp KeyLoop
 
-Cheat:
+Cheat: ;for test 按p鍵增加分數
     INVOKE IncScore
     INVOKE DrawScore
     jmp KeyLoop
 
-GenerateVerticalLine:
+GenerateHorizontalLine:
     ; 檢查是否達到最大生成數量
-    mov eax, verticalCount
-    cmp eax, verticalMax
+    mov eax, HorizontalCount
+    cmp eax, HorizontalMax
     jae KeyLoop            ; 如果達到最大數量，返回監聽循環
     
     
-    inc verticalCount       ; 增加生成數量
+    inc HorizontalCount       ; 增加生成數量
     ; 設定目標座標
     mov ax, (COORD PTR cat_destination_xy).X
     inc ax
@@ -531,11 +538,9 @@ moving:
     INVOKE Sleep, 25
     jmp GoToNextPlatform
 
-
-
 Success:
-    call Clrscr ; 清屏
-    mov verticalCount, 0
+    call Clrscr
+    mov HorizontalCount, 0
     mov (COORD PTR platform0_xy).X, 9  
     mov (COORD PTR platform0_xy).Y, 19
     mov (COORD PTR platformb_xy).X, 85
@@ -551,8 +556,8 @@ Success:
     mov (COORD PTR cat_destination_xy).Y, 15
     mov bx, (COORD PTR platform0_xy).X
     add bx, randomnum
-    mov (COORD PTR xyVertical).X, bx
-    mov (COORD PTR xyVertical).Y, 19
+    mov (COORD PTR xyHorizontal).X, bx
+    mov (COORD PTR xyHorizontal).Y, 19
     mov bx, randomnum
     mov last_random, bx
     INVOKE IncScore
